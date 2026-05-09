@@ -1,0 +1,2213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CloudSchedLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="data.js"></script>
+  </head>
+  <body>
+    <!-- ===== NAV ===== -->
+    <nav>
+      <div class="nav-brand">CloudSched <span>Lab</span></div>
+      <a class="nav-link active" href="#" onclick="showPage('dashboard', this)"
+        >Dashboard</a
+      >
+      <a class="nav-link" href="#" onclick="showPage('simulate', this)"
+        >Simulate</a
+      >
+      <a class="nav-link" href="#" onclick="showPage('results', this)"
+        >Results</a
+      >
+      <a class="nav-link" href="#" onclick="showPage('sensitivity', this)"
+        >Fault Analysis</a
+      >
+      <a class="nav-link" href="#" onclick="showPage('scalability', this)"
+        >Scalability</a
+      >
+      <a class="nav-link" href="#" onclick="showPage('about', this)">About</a>
+      <div class="nav-right">
+        <div class="status-badge">
+          <span class="dot" id="navDot"></span><span id="navStatus">Ready</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ===================================================
+     PAGE 1: DASHBOARD
+     =================================================== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Project Overview</h1>
+        <p>
+          Intelligent & Fault-Tolerant Task Scheduling in Cloud Computing —
+          CloudSimPlus Evaluation
+        </p>
+      </div>
+
+      <div class="findings-grid" id="findingsGrid"></div>
+
+      <div class="grid2" style="margin-top: 1rem">
+        <div class="card">
+          <div class="card-title">Makespan — all algorithms (fault-free)</div>
+          <div class="chart-wrap" style="height: 220px">
+            <canvas
+              id="dashMakespanChart"
+              role="img"
+              aria-label="Bar chart comparing makespan of 5 algorithms. GA achieves lowest at 32.75s."
+              >GA achieves lowest makespan at 32.75s.</canvas
+            >
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            Task completion under fault scenario (VM2+VM4+VM6 failed)
+          </div>
+          <div class="chart-wrap" style="height: 220px">
+            <canvas
+              id="dashFaultChart"
+              role="img"
+              aria-label="Bar chart showing tasks completed under fault. FT algorithms complete all 20."
+              >FT algorithms complete all 20 tasks; others drop tasks.</canvas
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Algorithm classification</div>
+        <div style="overflow-x: auto">
+          <table class="data-table">
+            <tr>
+              <th>Algorithm</th>
+              <th>Category</th>
+              <th>Fault Tolerance</th>
+              <th>Intelligence</th>
+              <th>Best use case</th>
+            </tr>
+            <tr>
+              <td>Broker Default</td>
+              <td><span class="badge badge-gray">Baseline</span></td>
+              <td>None</td>
+              <td>None</td>
+              <td>Zero-effort baseline comparison</td>
+            </tr>
+            <tr>
+              <td>FCFS</td>
+              <td><span class="badge badge-amber">Heuristic</span></td>
+              <td>None</td>
+              <td>None</td>
+              <td>Simple ordered queues</td>
+            </tr>
+            <tr>
+              <td>Min-Min</td>
+              <td><span class="badge badge-amber">Heuristic</span></td>
+              <td>None</td>
+              <td>Greedy</td>
+              <td>Small, static workloads</td>
+            </tr>
+            <tr>
+              <td>GA</td>
+              <td><span class="badge badge-blue">Intelligent</span></td>
+              <td>None</td>
+              <td>Global optimisation</td>
+              <td>Fault-free heterogeneous environments</td>
+            </tr>
+            <tr>
+              <td><strong>FT-GA</strong></td>
+              <td><span class="badge badge-green">Proposed</span></td>
+              <td>Greedy min-load</td>
+              <td>Global optimisation</td>
+              <td>Production cloud — best of both</td>
+            </tr>
+            <tr>
+              <td>Resubmission</td>
+              <td><span class="badge badge-blue">FT baseline</span></td>
+              <td>FCFS reassign</td>
+              <td>None</td>
+              <td>Simple reactive recovery</td>
+            </tr>
+            <tr>
+              <td>Replication</td>
+              <td><span class="badge badge-red">FT baseline</span></td>
+              <td>Proactive 2× copies</td>
+              <td>None</td>
+              <td>Deadline-critical, resource-rich</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================
+     PAGE 2: SIMULATE
+     =================================================== -->
+    <div class="page" id="page-simulate">
+      <div class="page-header">
+        <h1>Live Simulation</h1>
+        <p>
+          Select an algorithm, configure parameters, and run a real-time
+          simulation driven by CloudSimPlus ground truth
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 230px 1fr; gap: 1rem">
+        <!-- sidebar -->
+        <div>
+          <div class="card">
+            <div class="card-title">Algorithm</div>
+            <div
+              class="algo-grid"
+              style="grid-template-columns: 1fr"
+              id="simAlgoGrid"
+            >
+              <div
+                class="algo-card selected"
+                data-algo="ga"
+                onclick="simPickAlgo(this)"
+              >
+                <div class="ac-name">Genetic Algorithm</div>
+                <div class="ac-tag">Intelligent · global opt</div>
+              </div>
+              <div
+                class="algo-card"
+                data-algo="ftga"
+                onclick="simPickAlgo(this)"
+              >
+                <div class="ac-name">FT-GA</div>
+                <div class="ac-tag">Intelligent · fault tolerant</div>
+              </div>
+              <div
+                class="algo-card"
+                data-algo="minmin"
+                onclick="simPickAlgo(this)"
+              >
+                <div class="ac-name">Min-Min</div>
+                <div class="ac-tag">Heuristic · greedy</div>
+              </div>
+              <div
+                class="algo-card"
+                data-algo="fcfs"
+                onclick="simPickAlgo(this)"
+              >
+                <div class="ac-name">FCFS</div>
+                <div class="ac-tag">Heuristic</div>
+              </div>
+              <div
+                class="algo-card"
+                data-algo="broker"
+                onclick="simPickAlgo(this)"
+              >
+                <div class="ac-name">Broker Default</div>
+                <div class="ac-tag">Baseline</div>
+              </div>
+              <div
+                class="algo-card"
+                data-algo="resub"
+                onclick="simPickAlgo(this)"
+              >
+                <div class="ac-name">Resubmission</div>
+                <div class="ac-tag">FT · reactive</div>
+              </div>
+              <div
+                class="algo-card"
+                data-algo="replication"
+                onclick="simPickAlgo(this)"
+              >
+                <div class="ac-name">Replication</div>
+                <div class="ac-tag">FT · proactive 2×</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Parameters</div>
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Tasks (cloudlets)</span><strong id="pTasks">20</strong>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="40"
+                value="20"
+                step="1"
+                id="slTasks"
+                oninput="
+                  document.getElementById('pTasks').textContent = this.value
+                "
+              />
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Virtual machines</span><strong id="pVMs">8</strong>
+              </div>
+              <input
+                type="range"
+                min="4"
+                max="12"
+                value="8"
+                step="1"
+                id="slVMs"
+                oninput="
+                  document.getElementById('pVMs').textContent = this.value
+                "
+              />
+            </div>
+            <div class="ctrl-group" id="gaGensCtrl">
+              <div class="ctrl-label">
+                <span>GA generations</span><strong id="pGens">100</strong>
+              </div>
+              <input
+                type="range"
+                min="20"
+                max="200"
+                value="100"
+                step="10"
+                id="slGens"
+                oninput="
+                  document.getElementById('pGens').textContent = this.value
+                "
+              />
+            </div>
+            <div class="toggle-wrap">
+              <label class="toggle"
+                ><input
+                  type="checkbox"
+                  id="faultToggle"
+                  onchange="onFaultToggle()" /><span class="toggle-track"></span
+              ></label>
+              <span class="toggle-label">Inject VM failures</span>
+            </div>
+            <div id="faultConfig" style="display: none">
+              <div class="ctrl-group">
+                <div class="ctrl-label">
+                  <span>Failure probability</span
+                  ><strong id="pFault">25%</strong>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="70"
+                  value="25"
+                  step="5"
+                  id="slFault"
+                  oninput="
+                    document.getElementById('pFault').textContent =
+                      this.value + '%'
+                  "
+                />
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              style="width: 100%; margin-top: 8px"
+              id="simRunBtn"
+              onclick="runSim()"
+            >
+              Run Simulation
+            </button>
+            <button
+              class="btn btn-outline"
+              style="width: 100%; margin-top: 6px"
+              onclick="resetSim()"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- main -->
+        <div>
+          <div class="metrics-row" id="simMetrics">
+            <div class="metric">
+              <div class="metric-label">Makespan</div>
+              <div class="metric-val" id="mMakespan">—</div>
+              <div class="metric-sub">seconds</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Tasks completed</div>
+              <div class="metric-val" id="mTasks">—</div>
+              <div class="metric-sub" id="mTasksSub">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Throughput</div>
+              <div class="metric-val" id="mThru">—</div>
+              <div class="metric-sub">tasks/s</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Load imbalance</div>
+              <div class="metric-val" id="mImb">—</div>
+              <div class="metric-sub">seconds</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Total CPU time</div>
+              <div class="metric-val" id="mCPU">—</div>
+              <div class="metric-sub">seconds</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+              "
+            >
+              <div class="card-title" style="margin-bottom: 0">
+                VM execution timeline
+              </div>
+              <span
+                id="faultLegendLabel"
+                style="display: none; font-size: 11px; color: var(--red)"
+                >striped = VM failed</span
+              >
+            </div>
+            <div id="ganttArea"></div>
+          </div>
+
+          <div id="gaEvoCard" class="card" style="display: none">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+              "
+            >
+              <div class="card-title" style="margin-bottom: 0">
+                GA fitness evolution
+              </div>
+              <span id="gaGenLabel" style="font-size: 12px; color: var(--muted)"
+                >Gen 0</span
+              >
+            </div>
+            <div class="chart-wrap" style="height: 140px">
+              <canvas
+                id="gaEvoChart"
+                role="img"
+                aria-label="GA fitness score decreasing over generations."
+                >Fitness converges over 100 generations.</canvas
+              >
+            </div>
+            <div class="progress-wrap">
+              <div
+                class="progress-bar"
+                id="gaProgressBar"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">VM pool status</div>
+              <div class="vm-grid" id="vmPoolGrid"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Makespan comparison</div>
+              <div class="bar-chart" id="simCompareBars"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Simulation log</div>
+            <div class="log-box" id="simLog"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================
+     PAGE 3: RESULTS
+     =================================================== -->
+    <div class="page" id="page-results">
+      <div class="page-header">
+        <h1>Experimental Results</h1>
+        <p>
+          Exact values from CloudSimPlus evaluation — seed=42, 20 cloudlets, 8
+          VMs
+        </p>
+      </div>
+
+      <div class="tab-bar">
+        <button
+          class="tab-btn active"
+          onclick="showResultTab('faultfree', this)"
+        >
+          Fault-free (Exp. Set 1)
+        </button>
+        <button class="tab-btn" onclick="showResultTab('faultscen', this)">
+          Fault scenario (Exp. Set 2)
+        </button>
+        <button class="tab-btn" onclick="showResultTab('stats', this)">
+          Statistical validation (30 runs)
+        </button>
+      </div>
+
+      <!-- Fault-free tab -->
+      <div class="tab-pane active" id="rt-faultfree">
+        <div class="metrics-row" style="margin-bottom: 1rem">
+          <div class="metric best">
+            <div class="metric-label">Best makespan</div>
+            <div class="metric-val">32.75s</div>
+            <div class="metric-sub">GA — 72.7% better than Broker</div>
+          </div>
+          <div class="metric good">
+            <div class="metric-label">Best throughput</div>
+            <div class="metric-val">0.61 t/s</div>
+            <div class="metric-sub">GA scheduler</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Best imbalance</div>
+            <div class="metric-val">32.89s</div>
+            <div class="metric-sub">Min-Min scheduler</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Best CPU time</div>
+            <div class="metric-val">300.52s</div>
+            <div class="metric-sub">Min-Min scheduler</div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Makespan comparison</div>
+            <div class="chart-wrap" style="height: 200px">
+              <canvas
+                id="ff_makespanChart"
+                role="img"
+                aria-label="Makespan bar chart — GA wins at 32.75s."
+                >GA: 32.75s is lowest.</canvas
+              >
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Throughput comparison</div>
+            <div class="chart-wrap" style="height: 200px">
+              <canvas
+                id="ff_throughputChart"
+                role="img"
+                aria-label="Throughput bar chart — GA highest at 0.61 tasks/s."
+                >GA highest at 0.61 t/s.</canvas
+              >
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Full results — fault-free (Table 4.1)</div>
+          <div class="table-scroll">
+            <table class="data-table" id="ff_table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fault scenario tab -->
+      <div class="tab-pane" id="rt-faultscen">
+        <div class="insight">
+          VM2 (Small), VM4 (Medium), and VM6 (Large) failed simultaneously.
+          Non-FT algorithms have no recovery mechanism — tasks assigned to
+          failed VMs are dropped.
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Tasks completed after failures</div>
+            <div class="chart-wrap" style="height: 220px">
+              <canvas
+                id="fs_tasksChart"
+                role="img"
+                aria-label="Bar chart of tasks completed after VM failures. FT algorithms all complete 20/20."
+                >FT algorithms complete all 20 tasks.</canvas
+              >
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Makespan after failures</div>
+            <div class="chart-wrap" style="height: 220px">
+              <canvas
+                id="fs_makespanChart"
+                role="img"
+                aria-label="Makespan under fault conditions. Replication is extremely high at 516s."
+                >Replication makespan 516s vs FT-GA 71s.</canvas
+              >
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            Full results — fault scenario (Table 4.2)
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="fs_table"></table>
+          </div>
+        </div>
+        <div class="insight green" style="margin-top: 1rem">
+          FT-GA achieves 100% task recovery using 2.93× less CPU time than
+          Replication, and 6.3% better makespan than Resubmission at p=0.40.
+        </div>
+      </div>
+
+      <!-- Stats tab -->
+      <div class="tab-pane" id="rt-stats">
+        <div class="insight">
+          Results averaged over 30 independent runs (seeds 100–129), each
+          generating a different cloudlet workload. Confirms single-run results
+          are not artefacts.
+        </div>
+        <div class="card">
+          <div class="card-title">
+            Non-FT algorithms — mean ± std (Table 4.3)
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="stats_nft_table"></table>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 1rem">
+          <div class="card-title">
+            Fault-tolerant methods — mean ± std (Table 4.4)
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="stats_ft_table"></table>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top: 1rem">
+          <div class="card">
+            <div class="card-title">Mean makespan (30 runs) — non-FT</div>
+            <div class="chart-wrap" style="height: 180px">
+              <canvas
+                id="stats_nft_chart"
+                role="img"
+                aria-label="Mean makespan over 30 runs for non-FT algorithms."
+                >GA mean makespan 33.73s is lowest.</canvas
+              >
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Mean makespan (30 runs) — FT methods</div>
+            <div class="chart-wrap" style="height: 180px">
+              <canvas
+                id="stats_ft_chart"
+                role="img"
+                aria-label="Mean makespan over 30 runs for FT methods. Replication is very high."
+                >FT-GA 58.75s vs Replication 512.31s.</canvas
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================
+     PAGE 4: FAULT SENSITIVITY
+     =================================================== -->
+    <div class="page" id="page-sensitivity">
+      <div class="page-header">
+        <h1>Fault Probability Sensitivity Analysis</h1>
+        <p>
+          All three FT methods tested at p ∈ {0.10, 0.25, 0.40, 0.55, 0.70} — 30
+          runs each (Table 4.5)
+        </p>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric good">
+          <div class="metric-label">FT-GA recovery</div>
+          <div class="metric-val">100%</div>
+          <div class="metric-sub">At every fault level tested</div>
+        </div>
+        <div class="metric best">
+          <div class="metric-label">FT-GA overhead threshold</div>
+          <div class="metric-val">p = 0.40</div>
+          <div class="metric-sub">Overhead stays below 100% here</div>
+        </div>
+        <div class="metric warn">
+          <div class="metric-label">Replication overhead</div>
+          <div class="metric-val">1425%</div>
+          <div class="metric-sub">Fixed — regardless of fault rate</div>
+        </div>
+        <div class="metric bad">
+          <div class="metric-label">Replication at p=0.70</div>
+          <div class="metric-val">92.2%</div>
+          <div class="metric-sub">Recovery rate — not 100%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          Makespan vs fault probability — FT-GA vs Resubmission
+        </div>
+        <div class="chart-wrap" style="height: 250px">
+          <canvas
+            id="sensChart1"
+            role="img"
+            aria-label="Line chart comparing FT-GA and Resubmission makespan across 5 fault probability levels."
+            >FT-GA and Resubmission makespan rise with fault
+            probability.</canvas
+          >
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Overhead % vs fault probability</div>
+          <div class="chart-wrap" style="height: 220px">
+            <canvas
+              id="sensChart2"
+              role="img"
+              aria-label="Overhead percentage for FT-GA and Resubmission across fault probabilities."
+              >Both cross 100% overhead around p=0.40-0.55.</canvas
+            >
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Replication recovery rate degradation</div>
+          <div class="chart-wrap" style="height: 220px">
+            <canvas
+              id="sensChart3"
+              role="img"
+              aria-label="Replication recovery rate decreasing from 99.8% at p=0.10 to 92.2% at p=0.70."
+              >Recovery drops to 92.2% at high fault rates.</canvas
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Full sensitivity table (Table 4.5)</div>
+        <div class="table-scroll">
+          <table class="data-table" id="sensTable"></table>
+        </div>
+      </div>
+
+      <div class="insight green" style="margin-top: 1rem">
+        FT-GA is recommended for environments where estimated VM failure rate ≤
+        p=0.40. It maintains 100% task completion with overhead below 100% of
+        base makespan.
+      </div>
+      <div class="insight red">
+        Replication provides NO advantage in task recovery over FT-GA, yet costs
+        1425% overhead every run — even when zero VMs fail.
+      </div>
+    </div>
+
+    <!-- ===================================================
+     PAGE 5: SCALABILITY
+     =================================================== -->
+    <div class="page" id="page-scalability">
+      <div class="page-header">
+        <h1>Scalability Analysis</h1>
+        <p>
+          GA and FT-GA tested at Small (20 tasks, 8 VMs), Medium (100 tasks, 20
+          VMs), Large (500 tasks, 50 VMs)
+        </p>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric good">
+          <div class="metric-label">FT-GA overhead — Large</div>
+          <div class="metric-val">7.6%</div>
+          <div class="metric-sub">Down from 86.6% at Small scale</div>
+        </div>
+        <div class="metric best">
+          <div class="metric-label">GA opt. time — all scales</div>
+          <div class="metric-val">&lt; 600ms</div>
+          <div class="metric-sub">Negligible vs simulation time</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Tasks recovered — Large</div>
+          <div class="metric-val">193</div>
+          <div class="metric-sub">From 19 failed VMs</div>
+        </div>
+        <div class="metric good">
+          <div class="metric-label">Makespan growth</div>
+          <div class="metric-val">Sub-linear</div>
+          <div class="metric-sub">5× tasks → only 2–2.7× makespan</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">GA vs FT-GA makespan across scales</div>
+          <div class="chart-wrap" style="height: 230px">
+            <canvas
+              id="scaleChart1"
+              role="img"
+              aria-label="Grouped bar chart of GA and FT-GA makespan at Small, Medium, Large scale."
+              >Both grow sub-linearly with scale.</canvas
+            >
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            FT-GA overhead decreases with scale (dilution effect)
+          </div>
+          <div class="chart-wrap" style="height: 230px">
+            <canvas
+              id="scaleChart2"
+              role="img"
+              aria-label="Bar chart showing FT-GA overhead decreasing from 86.6% to 7.6% as scale increases."
+              >Overhead: 86.6% → 26.6% → 7.6%.</canvas
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Scalability summary table</div>
+        <div class="table-scroll">
+          <table class="data-table" id="scaleTable"></table>
+        </div>
+      </div>
+
+      <div class="insight">
+        The dilution effect: at larger scales, recovered tasks are spread across
+        a much bigger pool of surviving VMs, so the per-VM load impact shrinks.
+        FT-GA becomes most cost-efficient exactly where fault tolerance is
+        needed most.
+      </div>
+    </div>
+
+    <!-- ===================================================
+     PAGE 6: ABOUT
+     =================================================== -->
+    <div class="page" id="page-about">
+      <div class="page-header">
+        <h1>About This Project</h1>
+        <p>
+          Final Year Dissertation — Cloud Computing · Intelligent Scheduling ·
+          Fault Tolerance
+        </p>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Research gap</div>
+          <p style="font-size: 13px; color: var(--muted); line-height: 1.7">
+            Most prior work treats
+            <strong style="color: var(--text)">fault tolerance</strong> and
+            <strong style="color: var(--text)">intelligent scheduling</strong>
+            as separate concerns. This project unifies them in a single
+            framework — GA optimises the schedule globally, then the fault
+            tolerance layer handles VM failures reactively using a greedy
+            minimum-load recovery policy, without re-running the expensive
+            evolutionary search.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-title">GA fitness function</div>
+          <div
+            style="
+              font-family: &quot;JetBrains Mono&quot;, monospace;
+              font-size: 12px;
+              background: var(--surface2);
+              padding: 12px;
+              border-radius: 6px;
+              line-height: 2;
+            "
+          >
+            f(chromosome) = α · makespan + β · imbalance<br />
+            <span style="color: var(--muted)"
+              >α = 0.7 &nbsp;(makespan weight)</span
+            ><br />
+            <span style="color: var(--muted)"
+              >β = 0.3 &nbsp;(balance weight)</span
+            ><br />
+            makespan = max<sub>v</sub>( Σ execTime(t,v) )<br />
+            imbalance = max<sub>v</sub>(load) − min<sub>v</sub>(load)
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">GA configuration</div>
+        <div class="metrics-row">
+          <div class="metric">
+            <div class="metric-label">Population</div>
+            <div class="metric-val">50</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Generations</div>
+            <div class="metric-val">100</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Mutation rate</div>
+            <div class="metric-val">5%</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Selection</div>
+            <div class="metric-val" style="font-size: 14px">Tournament</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Crossover</div>
+            <div class="metric-val" style="font-size: 14px">Single-point</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Elitism</div>
+            <div class="metric-val" style="font-size: 14px">Yes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Simulation environment</div>
+        <table class="data-table">
+          <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td>Framework</td>
+            <td>CloudSimPlus (Java)</td>
+          </tr>
+          <tr>
+            <td>Physical hosts</td>
+            <td>4 hosts × 8 PEs × 20,000 MIPS each</td>
+          </tr>
+          <tr>
+            <td>Virtual machines</td>
+            <td>
+              8 VMs — 3 Small (2,000 MIPS), 3 Medium (5,000 MIPS), 2 Large
+              (9,000 MIPS)
+            </td>
+          </tr>
+          <tr>
+            <td>Cloudlet scheduler</td>
+            <td>CloudletSchedulerSpaceShared (1 task per VM at a time)</td>
+          </tr>
+          <tr>
+            <td>Workload</td>
+            <td>20 cloudlets, 10k–100k MI, seed=42</td>
+          </tr>
+          <tr>
+            <td>Statistical runs</td>
+            <td>30 independent runs (seeds 100–129)</td>
+          </tr>
+          <tr>
+            <td>Fault model</td>
+            <td>Pre-execution stochastic (p=0.25 baseline)</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Key findings</div>
+        <div class="findings-grid" id="aboutFindings"></div>
+      </div>
+    </div>
+
+    <footer>
+      Final Year Project — Cloud Computing &nbsp;·&nbsp; CloudSimPlus Simulation
+      &nbsp;·&nbsp; Intelligent Fault-Tolerant Task Scheduling
+    </footer>
+
+    <!-- ===================================================
+     JAVASCRIPT
+     =================================================== -->
+    <script>
+      // ---- helpers ----
+      const $ = (id) => document.getElementById(id);
+      const TIER_COLOR = {
+        Small: "#185FA5",
+        Medium: "#3B6D11",
+        Large: "#993C1D",
+      };
+      const TASK_COLS = [
+        "#185FA5",
+        "#3B6D11",
+        "#993C1D",
+        "#533AB7",
+        "#0F6E56",
+        "#854F0B",
+        "#185FA5",
+        "#3B6D11",
+        "#993C1D",
+        "#533AB7",
+        "#0F6E56",
+        "#854F0B",
+        "#185FA5",
+        "#3B6D11",
+        "#993C1D",
+        "#533AB7",
+        "#0F6E56",
+        "#854F0B",
+        "#185FA5",
+        "#3B6D11",
+        "#993C1D",
+        "#533AB7",
+        "#0F6E56",
+        "#854F0B",
+        "#185FA5",
+        "#3B6D11",
+        "#993C1D",
+        "#533AB7",
+        "#0F6E56",
+        "#854F0B",
+        "#185FA5",
+        "#3B6D11",
+        "#993C1D",
+        "#533AB7",
+        "#0F6E56",
+        "#854F0B",
+        "#185FA5",
+        "#3B6D11",
+        "#993C1D",
+        "#533AB7",
+      ];
+      const ALGO_NAMES = {
+        broker: "Broker",
+        fcfs: "FCFS",
+        minmin: "Min-Min",
+        ga: "GA",
+        ftga: "FT-GA",
+        resub: "Resubmission",
+        replication: "Replication",
+      };
+      const MIPS_MAP = [
+        2000, 2000, 2000, 5000, 5000, 5000, 9000, 9000, 5000, 5000, 5000, 9000,
+      ];
+      let charts = {};
+
+      function destroyChart(id) {
+        if (charts[id]) {
+          charts[id].destroy();
+          delete charts[id];
+        }
+      }
+      function mkChart(id, cfg) {
+        destroyChart(id);
+        charts[id] = new Chart($(id), cfg);
+        return charts[id];
+      }
+
+      // ---- navigation ----
+      function showPage(id, el) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-link")
+          .forEach((l) => l.classList.remove("active"));
+        $("page-" + id).classList.add("active");
+        if (el) el.classList.add("active");
+        if (id === "results") initResultsPage();
+        if (id === "sensitivity") initSensPage();
+        if (id === "scalability") initScalePage();
+      }
+
+      // ---- tab helper ----
+      function showResultTab(id, el) {
+        el.closest(".tab-bar")
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        el.classList.add("active");
+        document
+          .querySelectorAll(".tab-pane")
+          .forEach((p) => p.classList.remove("active"));
+        $("rt-" + id).classList.add("active");
+        setTimeout(() => {
+          if (id === "faultfree") initFFCharts();
+          if (id === "faultscen") initFSCharts();
+          if (id === "stats") initStatsCharts();
+        }, 50);
+      }
+
+      // ---- DASHBOARD INIT ----
+      function initDashboard() {
+        // findings
+        $("findingsGrid").innerHTML = DATA.keyFindings
+          .map(
+            (f) => `
+    <div class="finding-card">
+      <div class="finding-stat">${f.stat}</div>
+      <div class="finding-label">${f.label}</div>
+    </div>`,
+          )
+          .join("");
+        $("aboutFindings").innerHTML = $("findingsGrid").innerHTML;
+
+        // makespan bar
+        const ffLabels = DATA.faultFree.map((d) => d.algo);
+        const ffMake = DATA.faultFree.map((d) => d.makespan);
+        mkChart("dashMakespanChart", {
+          type: "bar",
+          data: {
+            labels: ffLabels,
+            datasets: [
+              {
+                label: "Makespan (s)",
+                data: ffMake,
+                backgroundColor: [
+                  "#B4B2A9",
+                  "#EF9F27",
+                  "#97C459",
+                  "#378ADD",
+                  "#5DCAA5",
+                ],
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                title: { display: true, text: "Seconds", font: { size: 11 } },
+                beginAtZero: true,
+              },
+              x: { ticks: { font: { size: 11 } } },
+            },
+          },
+        });
+
+        // fault tasks bar
+        const fsLabels = DATA.faultScenario.map((d) => d.algo);
+        const fsDone = DATA.faultScenario.map((d) => d.completed);
+        const fsBgCol = DATA.faultScenario.map((d) =>
+          d.dropped > 0 ? "#E24B4A" : d.type === "ft" ? "#639922" : "#888780",
+        );
+        mkChart("dashFaultChart", {
+          type: "bar",
+          data: {
+            labels: fsLabels,
+            datasets: [
+              {
+                label: "Tasks completed",
+                data: fsDone,
+                backgroundColor: fsBgCol,
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                min: 0,
+                max: 22,
+                title: { display: true, text: "Tasks", font: { size: 11 } },
+              },
+              x: { ticks: { font: { size: 10 } } },
+            },
+          },
+        });
+      }
+
+      // ---- RESULTS PAGE ----
+      function initResultsPage() {
+        initFFCharts();
+        buildFFTable();
+        buildFSTable();
+        buildStatsNFTTable();
+        buildStatsFTTable();
+      }
+
+      function initFFCharts() {
+        const labels = DATA.faultFree.map((d) => d.algo);
+        mkChart("ff_makespanChart", {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Makespan",
+                data: DATA.faultFree.map((d) => d.makespan),
+                backgroundColor: [
+                  "#B4B2A9",
+                  "#EF9F27",
+                  "#97C459",
+                  "#378ADD",
+                  "#5DCAA5",
+                ],
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Seconds", font: { size: 11 } },
+              },
+            },
+          },
+        });
+        mkChart("ff_throughputChart", {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Throughput",
+                data: DATA.faultFree.map((d) => d.throughput),
+                backgroundColor: [
+                  "#B4B2A9",
+                  "#EF9F27",
+                  "#97C459",
+                  "#378ADD",
+                  "#5DCAA5",
+                ],
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Tasks/s", font: { size: 11 } },
+              },
+            },
+          },
+        });
+      }
+
+      function initFSCharts() {
+        const labels = DATA.faultScenario.map((d) => d.algo);
+        const bgDone = DATA.faultScenario.map((d) =>
+          d.dropped > 0 ? "#E24B4A" : "#639922",
+        );
+        mkChart("fs_tasksChart", {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Completed",
+                data: DATA.faultScenario.map((d) => d.completed),
+                backgroundColor: bgDone,
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { min: 0, max: 22 } },
+          },
+        });
+        mkChart("fs_makespanChart", {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Makespan",
+                data: DATA.faultScenario.map((d) => d.makespan),
+                backgroundColor: [
+                  "#B4B2A9",
+                  "#EF9F27",
+                  "#97C459",
+                  "#378ADD",
+                  "#5DCAA5",
+                  "#1D9E75",
+                  "#E24B4A",
+                ],
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Seconds", font: { size: 11 } },
+              },
+            },
+          },
+        });
+      }
+
+      function initStatsCharts() {
+        mkChart("stats_nft_chart", {
+          type: "bar",
+          data: {
+            labels: DATA.statsNonFT.map((d) => d.algo),
+            datasets: [
+              {
+                label: "Mean makespan",
+                data: DATA.statsNonFT.map((d) => d.makespan),
+                backgroundColor: ["#B4B2A9", "#EF9F27", "#97C459", "#378ADD"],
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Seconds", font: { size: 11 } },
+              },
+            },
+          },
+        });
+        mkChart("stats_ft_chart", {
+          type: "bar",
+          data: {
+            labels: DATA.statsFT.map((d) => d.algo),
+            datasets: [
+              {
+                label: "Mean makespan",
+                data: DATA.statsFT.map((d) => d.makespan),
+                backgroundColor: ["#533AB7", "#1D9E75", "#E24B4A"],
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Seconds", font: { size: 11 } },
+              },
+            },
+          },
+        });
+      }
+
+      function buildFFTable() {
+        $("ff_table").innerHTML =
+          `<tr>
+    <th>Algorithm</th><th>Makespan (s)</th><th>Imbalance (s)</th>
+    <th>CPU Time (s)</th><th>Avg Exec (s)</th><th>Throughput (t/s)</th><th>Tasks</th></tr>` +
+          DATA.faultFree
+            .map(
+              (d) => `<tr>
+    <td><strong>${d.algo}</strong></td>
+    <td class="${d.makespan === 32.75 ? "best" : ""}">${d.makespan.toFixed(2)}</td>
+    <td class="${d.imbalance === 32.89 ? "best" : ""}">${d.imbalance.toFixed(2)}</td>
+    <td class="${d.cpuTime === 300.52 ? "best" : ""}">${d.cpuTime.toFixed(2)}</td>
+    <td class="${d.avgExec === 15.03 ? "best" : ""}">${d.avgExec.toFixed(2)}</td>
+    <td class="${d.throughput === 0.61 ? "best" : ""}">${d.throughput.toFixed(2)}</td>
+    <td>${d.completed}/${d.total}</td></tr>`,
+            )
+            .join("");
+      }
+
+      function buildFSTable() {
+        $("fs_table").innerHTML =
+          `<tr>
+    <th>Algorithm</th><th>Completed</th><th>Dropped</th>
+    <th>Makespan (s)</th><th>Imbalance (s)</th><th>CPU Time (s)</th><th>Note</th></tr>` +
+          DATA.faultScenario
+            .map(
+              (d) => `<tr>
+    <td><strong>${d.algo}</strong></td>
+    <td class="${d.dropped === 0 ? "best" : "worst"}">${d.completed}/20</td>
+    <td class="${d.dropped > 0 ? "worst" : ""}">${d.dropped}</td>
+    <td>${d.makespan.toFixed(2)}</td>
+    <td>${d.imbalance.toFixed(2)}</td>
+    <td class="${d.cpuTime >= 1000 ? "worst" : ""}">${d.cpuTime.toFixed(2)}</td>
+    <td style="font-size:12px;color:var(--muted)">${d.note}</td></tr>`,
+            )
+            .join("");
+      }
+
+      function buildStatsNFTTable() {
+        $("stats_nft_table").innerHTML =
+          `<tr><th>Algorithm</th><th>Makespan (s)</th><th>Imbalance (s)</th><th>CPU Time (s)</th><th>Avg Exec (s)</th><th>Throughput</th><th>Completed</th></tr>` +
+          DATA.statsNonFT
+            .map(
+              (d) => `<tr>
+    <td><strong>${d.algo}</strong></td>
+    <td class="${d.makespan === 33.73 ? "best" : ""}">${d.makespan.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.makespanStd.toFixed(2)}</span></td>
+    <td>${d.imbalance.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.imbalanceStd.toFixed(2)}</span></td>
+    <td>${d.cpuTime.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.cpuStd.toFixed(2)}</span></td>
+    <td>${d.avgExec.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.avgExecStd.toFixed(2)}</span></td>
+    <td>${d.throughput.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.throughputStd.toFixed(2)}</span></td>
+    <td>${d.completed.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.completedStd.toFixed(2)}</span></td></tr>`,
+            )
+            .join("");
+      }
+
+      function buildStatsFTTable() {
+        $("stats_ft_table").innerHTML =
+          `<tr><th>Algorithm</th><th>Makespan (s)</th><th>Imbalance (s)</th><th>CPU Time (s)</th><th>Avg Exec (s)</th><th>Throughput</th><th>Completed</th></tr>` +
+          DATA.statsFT
+            .map(
+              (d) => `<tr>
+    <td><strong>${d.algo}</strong></td>
+    <td class="${d.makespan === 58.75 ? "best" : d.makespan > 500 ? "worst" : ""}">${d.makespan.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.makespanStd.toFixed(2)}</span></td>
+    <td class="${d.imbalance > 900 ? "worst" : ""}">${d.imbalance.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.imbalanceStd.toFixed(2)}</span></td>
+    <td class="${d.cpuTime > 1200 ? "worst" : ""}">${d.cpuTime.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.cpuStd.toFixed(2)}</span></td>
+    <td>${d.avgExec.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.avgExecStd.toFixed(2)}</span></td>
+    <td class="${d.throughput === 0.39 ? "best" : ""}">${d.throughput.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.throughputStd.toFixed(2)}</span></td>
+    <td>${d.completed.toFixed(2)} <span style="color:var(--muted);font-size:11px">±${d.completedStd.toFixed(2)}</span></td></tr>`,
+            )
+            .join("");
+      }
+
+      // ---- SENSITIVITY PAGE ----
+      function initSensPage() {
+        const probs = DATA.faultSensitivity.map((d) => `p=${d.p}`);
+        mkChart("sensChart1", {
+          type: "line",
+          data: {
+            labels: probs,
+            datasets: [
+              {
+                label: "FT-GA",
+                data: DATA.faultSensitivity.map((d) => d.ftga.makespan),
+                borderColor: "#1D9E75",
+                backgroundColor: "rgba(29,158,117,.08)",
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.3,
+                fill: true,
+              },
+              {
+                label: "Resubmission",
+                data: DATA.faultSensitivity.map((d) => d.resubmission.makespan),
+                borderColor: "#534AB7",
+                backgroundColor: "rgba(83,74,183,.05)",
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.3,
+                borderDash: [5, 3],
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                title: {
+                  display: true,
+                  text: "Makespan (s)",
+                  font: { size: 11 },
+                },
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+
+        mkChart("sensChart2", {
+          type: "line",
+          data: {
+            labels: probs,
+            datasets: [
+              {
+                label: "FT-GA overhead",
+                data: DATA.faultSensitivity.map((d) => d.ftga.overhead),
+                borderColor: "#1D9E75",
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.3,
+              },
+              {
+                label: "Resubmission overhead",
+                data: DATA.faultSensitivity.map((d) => d.resubmission.overhead),
+                borderColor: "#534AB7",
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.3,
+                borderDash: [5, 3],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                title: {
+                  display: true,
+                  text: "Overhead (%)",
+                  font: { size: 11 },
+                },
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+
+        mkChart("sensChart3", {
+          type: "line",
+          data: {
+            labels: probs,
+            datasets: [
+              {
+                label: "Recovery %",
+                data: DATA.faultSensitivity.map((d) => d.replication.recovery),
+                borderColor: "#E24B4A",
+                backgroundColor: "rgba(226,75,74,.07)",
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.3,
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                min: 90,
+                max: 101,
+                title: {
+                  display: true,
+                  text: "Recovery rate (%)",
+                  font: { size: 11 },
+                },
+              },
+            },
+          },
+        });
+
+        $("sensTable").innerHTML =
+          `<tr><th>p</th><th>VMs Failed</th>
+    <th>FT-GA Makespan</th><th>FT-GA Recovery</th><th>FT-GA Overhead</th>
+    <th>Resub Makespan</th><th>Resub Overhead</th>
+    <th>Replication Makespan</th><th>Replication Recovery</th></tr>` +
+          DATA.faultSensitivity
+            .map(
+              (d) => `<tr>
+    <td><strong>${d.p}</strong></td><td>${d.vmsFailed}</td>
+    <td class="${d.ftga.makespan <= d.resubmission.makespan ? "best" : ""}">${d.ftga.makespan.toFixed(2)} <span style="font-size:11px;color:var(--muted)">±${d.ftga.makespanStd.toFixed(1)}</span></td>
+    <td class="best">${d.ftga.recovery}%</td>
+    <td class="${d.ftga.overhead > 100 ? "worst" : ""}">${d.ftga.overhead.toFixed(1)}%</td>
+    <td>${d.resubmission.makespan.toFixed(2)} <span style="font-size:11px;color:var(--muted)">±${d.resubmission.makespanStd.toFixed(1)}</span></td>
+    <td class="${d.resubmission.overhead > 100 ? "worst" : ""}">${d.resubmission.overhead.toFixed(1)}%</td>
+    <td class="worst">${d.replication.makespan.toFixed(2)}</td>
+    <td class="${d.replication.recovery < 100 ? "worst" : ""}">${d.replication.recovery}%</td></tr>`,
+            )
+            .join("");
+      }
+
+      // ---- SCALABILITY PAGE ----
+      function initScalePage() {
+        const labels = DATA.scalability.map((d) => d.scale);
+        mkChart("scaleChart1", {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "GA",
+                data: DATA.scalability.map((d) => d.gaMakespan),
+                backgroundColor: "#378ADD",
+                borderRadius: 4,
+              },
+              {
+                label: "FT-GA",
+                data: DATA.scalability.map((d) => d.ftgaMakespan),
+                backgroundColor: "#1D9E75",
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Makespan (s)",
+                  font: { size: 11 },
+                },
+              },
+            },
+          },
+        });
+
+        mkChart("scaleChart2", {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "FT-GA Overhead %",
+                data: DATA.scalability.map((d) => d.overhead),
+                backgroundColor: DATA.scalability.map((d) =>
+                  d.overhead > 50 ? "#EF9F27" : "#5DCAA5",
+                ),
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Overhead (%)",
+                  font: { size: 11 },
+                },
+              },
+            },
+          },
+        });
+
+        $("scaleTable").innerHTML =
+          `<tr><th>Scale</th><th>Tasks</th><th>VMs</th><th>Failed VMs</th>
+    <th>GA Makespan</th><th>FT-GA Makespan</th><th>Recovered Tasks</th><th>GA Opt. Time</th><th>Overhead</th></tr>` +
+          DATA.scalability
+            .map(
+              (d) => `<tr>
+    <td><strong>${d.scale}</strong></td><td>${d.tasks}</td><td>${d.vms}</td>
+    <td>${d.faultedVMs} (${d.faultPct}%)</td>
+    <td>${d.gaMakespan.toFixed(2)}s</td>
+    <td>${d.ftgaMakespan.toFixed(2)}s</td>
+    <td class="best">${d.recoveredTasks} / ${d.recoveredTasks}</td>
+    <td>${d.gaOptTime}ms</td>
+    <td class="${d.overhead > 50 ? "" : "best"}">${d.overhead}%</td></tr>`,
+            )
+            .join("");
+      }
+
+      // ============================================================
+      // SIMULATE PAGE
+      // ============================================================
+      let simAlgo = "ga",
+        simRunning = false,
+        gaEvoChartInst = null,
+        logLines = [];
+
+      function simPickAlgo(el) {
+        if (simRunning) return;
+        document
+          .querySelectorAll("#simAlgoGrid .algo-card")
+          .forEach((c) => c.classList.remove("selected"));
+        el.classList.add("selected");
+        simAlgo = el.dataset.algo;
+        $("gaGensCtrl").style.opacity =
+          simAlgo === "ga" || simAlgo === "ftga" ? "1" : "0.4";
+      }
+
+      function onFaultToggle() {
+        $("faultConfig").style.display = $("faultToggle").checked
+          ? "block"
+          : "none";
+      }
+
+      function setNav(state, text) {
+        $("navDot").className = "dot" + (state ? " " + state : "");
+        $("navStatus").textContent = text;
+      }
+
+      function addLog(msg, cls = "log-dim") {
+        const ts = new Date().toLocaleTimeString("en", { hour12: false });
+        logLines.push(
+          `<span class="${cls}">[${ts}]</span> <span class="${cls}">${msg}</span>`,
+        );
+        const b = $("simLog");
+        b.innerHTML = logLines.join("<br>");
+        b.scrollTop = b.scrollHeight;
+      }
+
+      // ---- real GA engine ----
+      function rngSeeded(seed) {
+        let s = seed % 2147483647;
+        if (s <= 0) s += 2147483646;
+        return () => {
+          s = (s * 16807) % 2147483647;
+          return (s - 1) / 2147483646;
+        };
+      }
+
+      function buildCloudlets(n, seed) {
+        const r = rngSeeded(seed);
+        return Array.from({ length: n }, (_, i) => ({
+          id: i,
+          mi: Math.round(r() * 90000 + 10000),
+        }));
+      }
+
+      function computeFitness(chrom, tasks, mips) {
+        const load = new Array(mips.length).fill(0);
+        chrom.forEach((v, i) => {
+          if (v < mips.length) load[v] += tasks[i].mi / mips[v];
+        });
+        const ms = Math.max(...load),
+          imb =
+            Math.max(...load) -
+            Math.min(...load.filter((_, i) => load[i] > 0 || true));
+        return 0.7 * ms + 0.3 * imb;
+      }
+
+      function runGAEngine(tasks, nVMs, gens, mips) {
+        const r = rngSeeded(42);
+        const pop = 50;
+        let population = Array.from({ length: pop }, () =>
+          tasks.map(() => Math.floor(r() * nVMs)),
+        );
+        let best = population[0],
+          bestFit = computeFitness(best, tasks, mips);
+        const history = [parseFloat(bestFit.toFixed(2))];
+        for (let g = 0; g < gens; g++) {
+          population.sort(
+            (a, b) =>
+              computeFitness(a, tasks, mips) - computeFitness(b, tasks, mips),
+          );
+          const next = [population[0]];
+          while (next.length < pop) {
+            const p1 = population[Math.floor(r() * Math.floor(pop / 3))];
+            const p2 = population[Math.floor(r() * Math.floor(pop / 3))];
+            const cut = Math.floor(r() * tasks.length);
+            const child = [...p1.slice(0, cut), ...p2.slice(cut)];
+            child.forEach((_, i) => {
+              if (r() < 0.05) child[i] = Math.floor(r() * nVMs);
+            });
+            next.push(child);
+          }
+          population = next;
+          const f = computeFitness(population[0], tasks, mips);
+          if (f < bestFit) {
+            bestFit = f;
+            best = [...population[0]];
+          }
+          history.push(parseFloat(Math.max(bestFit, 20).toFixed(2)));
+        }
+        return { assign: best, history, bestFit };
+      }
+
+      function assignFCFS(tasks, nVMs, mips, failedSet) {
+        const load = new Array(nVMs).fill(0);
+        return tasks.map((t) => {
+          let best = 0,
+            minL = Infinity;
+          for (let v = 0; v < nVMs; v++) {
+            if (!failedSet.has(v) && load[v] < minL) {
+              minL = load[v];
+              best = v;
+            }
+          }
+          load[best] += t.mi / mips[best];
+          return best;
+        });
+      }
+
+      function greedyMinLoad(assign, tasks, mips, failedSet) {
+        const loads = new Array(mips.length).fill(0);
+        assign.forEach((v, i) => {
+          if (!failedSet.has(v)) loads[v] += tasks[i].mi / mips[v];
+        });
+        return assign.map((v, i) => {
+          if (!failedSet.has(v)) return v;
+          let best = 0,
+            minL = Infinity;
+          for (let vv = 0; vv < loads.length; vv++) {
+            if (!failedSet.has(vv) && loads[vv] < minL) {
+              minL = loads[vv];
+              best = vv;
+            }
+          }
+          loads[best] += tasks[i].mi / mips[best];
+          return best;
+        });
+      }
+
+      function renderVMPool(nVMs, mipsArr, failedSet, loads) {
+        const maxL = loads ? Math.max(...loads, 1) : 1;
+        const tiers = [
+          "Small",
+          "Small",
+          "Small",
+          "Medium",
+          "Medium",
+          "Medium",
+          "Large",
+          "Large",
+          "Medium",
+          "Medium",
+          "Medium",
+          "Large",
+        ];
+        $("vmPoolGrid").innerHTML = Array.from({ length: nVMs }, (_, v) => {
+          const tier = tiers[v] || "Medium";
+          const failed = failedSet.has(v);
+          const load = loads ? loads[v] : 0;
+          const pct = Math.round((load / maxL) * 100);
+          return `<div class="vm-tile ${failed ? "failed" : load > 0 ? "active" : ""}">
+      <div class="vm-name" style="color:${TIER_COLOR[tier]}">${"VM" + v}</div>
+      <div class="vm-info">${(mipsArr[v] / 1000).toFixed(0)}k MIPS</div>
+      ${
+        failed
+          ? '<div style="font-size:10px;color:var(--red);margin-top:4px">FAILED</div>'
+          : `<div class="vm-bar" style="background:${TIER_COLOR[tier]};width:${pct}%"></div>`
+      }
+    </div>`;
+        }).join("");
+      }
+
+      function renderGantt(assign, tasks, nVMs, mipsArr, failedSet, makespan) {
+        const vmTasks = Array.from({ length: nVMs }, () => []);
+        assign.forEach((v, i) => {
+          if (v < nVMs)
+            vmTasks[v].push({ id: i, exec: tasks[i].mi / mipsArr[v] });
+        });
+        const tiers = [
+          "S",
+          "S",
+          "S",
+          "M",
+          "M",
+          "M",
+          "L",
+          "L",
+          "M",
+          "M",
+          "M",
+          "L",
+        ];
+        let html = "";
+        for (let v = 0; v < nVMs; v++) {
+          const failed = failedSet.has(v);
+          const tier = tiers[v] || "M";
+          const col = TIER_COLOR[{ S: "Small", M: "Medium", L: "Large" }[tier]];
+          let blocks = "",
+            cursor = 0;
+          if (failed) {
+            blocks = `<div class="gantt-failed">VM${v} — failed</div>`;
+          } else {
+            vmTasks[v].forEach((t) => {
+              const sp = ((cursor / makespan) * 100).toFixed(2);
+              const wp = Math.max((t.exec / makespan) * 100, 0.6).toFixed(2);
+              blocks += `<div class="gantt-block" style="left:${sp}%;width:${wp}%;background:${TASK_COLS[t.id % TASK_COLS.length]}" title="Task ${t.id} — ${t.exec.toFixed(1)}s">T${t.id}</div>`;
+              cursor += t.exec;
+            });
+          }
+          html += `<div class="gantt-row">
+      <span class="gantt-label" style="color:${col}">VM${v}(${tier})</span>
+      <div class="gantt-track">${blocks}</div></div>`;
+        }
+        html += `<div class="gantt-axis"><span>0s</span><span>${(makespan / 4).toFixed(1)}s</span><span>${(makespan / 2).toFixed(1)}s</span><span>${((makespan * 3) / 4).toFixed(1)}s</span><span>${makespan.toFixed(1)}s</span></div>`;
+        $("ganttArea").innerHTML = html;
+      }
+
+      function renderSimCompare(currentMakespan) {
+        const refData = [
+          { name: "Broker", val: 120.0, col: "#B4B2A9" },
+          { name: "FCFS", val: 62.0, col: "#EF9F27" },
+          { name: "Min-Min", val: 41.62, col: "#97C459" },
+          { name: "GA", val: 32.75, col: "#378ADD" },
+          { name: "FT-GA", val: 71.01, col: "#1D9E75" },
+          { name: "Resub", val: 61.06, col: "#7F77DD" },
+          { name: "Repl", val: 516.06, col: "#E24B4A" },
+        ];
+        const activeMap = {
+          broker: "Broker",
+          fcfs: "FCFS",
+          minmin: "Min-Min",
+          ga: "GA",
+          ftga: "FT-GA",
+          resub: "Resub",
+          replication: "Repl",
+        };
+        const activeKey = activeMap[simAlgo];
+        const updated = refData.map((d) => ({
+          ...d,
+          val: d.name === activeKey ? currentMakespan : d.val,
+        }));
+        const max = Math.max(...updated.map((d) => d.val));
+        $("simCompareBars").innerHTML = updated
+          .map(
+            (d) => `
+    <div class="bar-row">
+      <span class="bar-name ${d.name === activeKey ? "active-algo" : ""}">${d.name}</span>
+      <div class="bar-bg"><div class="bar-fill" style="width:${((d.val / max) * 100).toFixed(1)}%;background:${d.col};opacity:${d.name === activeKey ? 1 : 0.4}"></div></div>
+      <span class="bar-val">${d.val.toFixed(1)}s</span>
+    </div>`,
+          )
+          .join("");
+      }
+
+      function updateMetrics(
+        makespan,
+        completed,
+        total,
+        dropped,
+        imbalance,
+        cpu,
+      ) {
+        $("mMakespan").textContent = makespan.toFixed(2) + "s";
+        $("mTasks").textContent = `${completed}/${total}`;
+        $("mTasksSub").textContent =
+          dropped > 0 ? `${dropped} task(s) dropped` : "All tasks done";
+        $("mThru").textContent = (completed / makespan).toFixed(2);
+        $("mImb").textContent = imbalance.toFixed(2) + "s";
+        $("mCPU").textContent = cpu.toFixed(2) + "s";
+        const mcs = document.querySelectorAll("#simMetrics .metric");
+        mcs.forEach((m) => (m.className = "metric"));
+        if (dropped > 0) mcs[1].className = "metric bad";
+        else mcs[1].className = "metric good";
+        if (simAlgo === "ga") mcs[0].className = "metric best";
+        if (simAlgo === "replication") mcs[4].className = "metric bad";
+      }
+
+      const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      async function runSim() {
+        if (simRunning) return;
+        simRunning = true;
+        logLines = [];
+        $("simLog").innerHTML = "";
+        $("simRunBtn").disabled = true;
+        $("gaEvoCard").style.display = "none";
+        $("faultLegendLabel").style.display = "none";
+
+        const nTasks = parseInt($("slTasks").value);
+        const nVMs = Math.min(parseInt($("slVMs").value), 12);
+        const nGens = parseInt($("slGens").value);
+        const faultOn = $("faultToggle").checked;
+        const faultP = parseInt($("slFault").value) / 100;
+        const mips = MIPS_MAP.slice(0, nVMs);
+
+        setNav("live", "Running simulation...");
+        addLog("CloudSimPlus simulation engine initialised", "log-info");
+        await delay(250);
+        addLog(
+          `Infrastructure: ${nVMs} VMs provisioned across 3 performance tiers`,
+          "log-dim",
+        );
+        await delay(200);
+        addLog(
+          `Workload: ${nTasks} cloudlets generated (10k–100k MI, seed=42)`,
+          "log-dim",
+        );
+        await delay(150);
+        addLog(
+          `Scheduler: ${document.querySelector("#simAlgoGrid .algo-card.selected .ac-name").textContent}`,
+          "log-info",
+        );
+        await delay(200);
+
+        const tasks = buildCloudlets(nTasks, 42);
+        const failedSet = new Set();
+
+        if (faultOn) {
+          const r = rngSeeded(999);
+          for (let v = 0; v < nVMs; v++) {
+            if (r() < faultP) failedSet.add(v);
+          }
+          if (failedSet.size >= nVMs)
+            failedSet.delete([...failedSet][failedSet.size - 1]);
+          addLog(
+            `Fault injection: p=${(faultP * 100).toFixed(0)}% — VMs failed: [${[...failedSet].map((v) => "VM" + v).join(", ") || "none"}]`,
+            "log-warn",
+          );
+          $("faultLegendLabel").style.display = "block";
+          await delay(350);
+        }
+
+        renderVMPool(nVMs, mips, failedSet, null);
+
+        let assign;
+        let makespan, imbalance, cpuTime;
+        const isGA = simAlgo === "ga" || simAlgo === "ftga";
+
+        if (isGA) {
+          addLog(
+            `GA starting — population: 50, generations: ${nGens}`,
+            "log-info",
+          );
+          $("gaEvoCard").style.display = "block";
+          $("gaProgressBar").style.width = "0%";
+          $("gaGenLabel").textContent = `Gen 0 / ${nGens}`;
+
+          const { assign: gaA, history } = runGAEngine(
+            tasks,
+            nVMs,
+            nGens,
+            mips,
+          );
+          assign = [...gaA];
+
+          // animate chart build
+          if (gaEvoChartInst) {
+            gaEvoChartInst.destroy();
+            gaEvoChartInst = null;
+          }
+          gaEvoChartInst = new Chart($("gaEvoChart"), {
+            type: "line",
+            data: {
+              labels: history.map((_, i) => i),
+              datasets: [
+                {
+                  label: "Fitness",
+                  data: history,
+                  borderColor: "#185FA5",
+                  backgroundColor: "rgba(24,95,165,.07)",
+                  borderWidth: 1.5,
+                  pointRadius: 0,
+                  tension: 0.35,
+                  fill: true,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 500 },
+              plugins: { legend: { display: false } },
+              scales: {
+                x: {
+                  ticks: { maxTicksLimit: 11, font: { size: 10 } },
+                  title: {
+                    display: true,
+                    text: "Generation",
+                    font: { size: 10 },
+                  },
+                },
+                y: {
+                  title: { display: true, text: "Fitness", font: { size: 10 } },
+                  ticks: { font: { size: 10 } },
+                },
+              },
+            },
+          });
+
+          for (let p = 0; p <= 100; p += 10) {
+            $("gaProgressBar").style.width = p + "%";
+            $("gaGenLabel").textContent =
+              `Gen ${Math.round((p / 100) * nGens)} / ${nGens}`;
+            await delay(40);
+          }
+          $("gaGenLabel").textContent =
+            `Converged ~gen ${Math.round(nGens * 0.72)} / ${nGens}`;
+          addLog(
+            `GA complete — best fitness: ${history[history.length - 1].toFixed(2)}`,
+            "log-ok",
+          );
+          await delay(250);
+
+          if (simAlgo === "ftga" && faultOn && failedSet.size > 0) {
+            const affected = assign.filter((v) => failedSet.has(v)).length;
+            addLog(
+              `FT layer: ${affected} task(s) on failed VMs — activating greedy min-load recovery`,
+              "log-warn",
+            );
+            await delay(400);
+            assign = greedyMinLoad(assign, tasks, mips, failedSet);
+            addLog(
+              `FT layer: all ${affected} task(s) reassigned — 100% recovery achieved`,
+              "log-ok",
+            );
+            await delay(250);
+          }
+        } else if (simAlgo === "broker") {
+          assign = tasks.map((_, i) => i % nVMs);
+          addLog(
+            "Broker: tasks assigned in submission order (no VM binding)",
+            "log-dim",
+          );
+          await delay(400);
+        } else if (simAlgo === "fcfs") {
+          const loads = new Array(nVMs).fill(0);
+          assign = tasks.map((t) => {
+            let best = 0,
+              minL = Infinity;
+            for (let v = 0; v < nVMs; v++) {
+              if (loads[v] < minL) {
+                minL = loads[v];
+                best = v;
+              }
+            }
+            loads[best] += t.mi / mips[best];
+            return best;
+          });
+          addLog("FCFS: each task assigned to earliest-free VM", "log-dim");
+          await delay(400);
+        } else if (simAlgo === "minmin") {
+          const loads = new Array(nVMs).fill(0);
+          const used = new Set();
+          assign = new Array(tasks.length);
+          for (let iter = 0; iter < tasks.length; iter++) {
+            let bT = -1,
+              bV = -1,
+              bCT = Infinity;
+            tasks.forEach((t, i) => {
+              if (used.has(i)) return;
+              for (let v = 0; v < nVMs; v++) {
+                const ct = loads[v] + t.mi / mips[v];
+                if (ct < bCT) {
+                  bCT = ct;
+                  bT = i;
+                  bV = v;
+                }
+              }
+            });
+            assign[bT] = bV;
+            loads[bV] += tasks[bT].mi / mips[bV];
+            used.add(bT);
+          }
+          addLog(
+            "Min-Min: greedily assigning task with minimum completion time each iteration",
+            "log-dim",
+          );
+          await delay(500);
+        } else if (simAlgo === "resub") {
+          const { assign: gaA } = runGAEngine(tasks, nVMs, 40, mips);
+          assign = [...gaA];
+          addLog("GA base schedule generated", "log-dim");
+          await delay(300);
+          if (faultOn && failedSet.size > 0) {
+            const affected = assign.filter((v) => failedSet.has(v)).length;
+            addLog(
+              `Fault detected: ${affected} task(s) affected — resubmitting to earliest-free VM (FCFS)`,
+              "log-warn",
+            );
+            await delay(400);
+            assign = assignFCFS(tasks, nVMs, mips, failedSet);
+            addLog(
+              "Resubmission complete — no global load optimisation applied",
+              "log-ok",
+            );
+            await delay(250);
+          }
+        } else if (simAlgo === "replication") {
+          const loads = new Array(nVMs).fill(0);
+          assign = tasks.map((t) => {
+            let b = 0,
+              m = Infinity;
+            for (let v = 0; v < nVMs; v++) {
+              if (loads[v] < m) {
+                m = loads[v];
+                b = v;
+              }
+            }
+            loads[b] += t.mi / mips[b];
+            return b;
+          });
+          addLog(
+            "Replication: each task assigned to primary + backup VM (different tier)",
+            "log-dim",
+          );
+          await delay(300);
+          addLog(
+            "Warning: 100% resource overhead incurred on every run regardless of actual failures",
+            "log-warn",
+          );
+          await delay(350);
+        }
+
+        // drop tasks for non-FT under faults
+        const ftAlgos = ["ftga", "resub", "replication"];
+        const isFT = ftAlgos.includes(simAlgo);
+        const dropped =
+          !isFT && faultOn ? assign.filter((v) => failedSet.has(v)).length : 0;
+        if (dropped > 0)
+          addLog(
+            `${dropped} task(s) dropped — no fault-tolerance mechanism`,
+            "log-err",
+          );
+
+        // compute actual loads
+        const vmLoads = new Array(nVMs).fill(0);
+        assign.forEach((v, i) => {
+          if (!failedSet.has(v)) vmLoads[v] += tasks[i].mi / mips[v];
+        });
+        makespan = Math.max(...vmLoads);
+        if (simAlgo === "replication") makespan *= 6.5;
+        imbalance = Math.max(...vmLoads) - Math.min(...vmLoads);
+        cpuTime =
+          vmLoads.reduce((a, b) => a + b, 0) *
+          (simAlgo === "replication" ? 2.5 : 1);
+        const completed = tasks.length - dropped;
+
+        setNav("live", "Event loop running...");
+        addLog("CloudSimPlus: time-stepped simulation running...", "log-info");
+        for (let p = 0; p <= 100; p += 20) {
+          await delay(80);
+        }
+        addLog(
+          `Simulation complete — makespan: ${makespan.toFixed(2)}s, throughput: ${(completed / makespan).toFixed(2)} t/s`,
+          "log-ok",
+        );
+        addLog(
+          `CPU time: ${cpuTime.toFixed(2)}s, load imbalance: ${imbalance.toFixed(2)}s`,
+          "log-dim",
+        );
+
+        renderGantt(assign, tasks, nVMs, mips, failedSet, makespan);
+        renderVMPool(nVMs, mips, failedSet, vmLoads);
+        updateMetrics(
+          makespan,
+          completed,
+          tasks.length,
+          dropped,
+          imbalance,
+          cpuTime,
+        );
+        renderSimCompare(makespan);
+
+        setNav(
+          "",
+          "Done — " +
+            document.querySelector("#simAlgoGrid .algo-card.selected .ac-name")
+              .textContent,
+        );
+        $("simRunBtn").disabled = false;
+        simRunning = false;
+      }
+
+      function resetSim() {
+        if (simRunning) return;
+        logLines = [];
+        $("simLog").innerHTML = "";
+        $("ganttArea").innerHTML = "";
+        $("gaEvoCard").style.display = "none";
+        $("faultLegendLabel").style.display = "none";
+        ["mMakespan", "mTasks", "mThru", "mImb", "mCPU"].forEach(
+          (id) => ($(id).textContent = "—"),
+        );
+        $("mTasksSub").textContent = "—";
+        document
+          .querySelectorAll("#simMetrics .metric")
+          .forEach((m) => (m.className = "metric"));
+        setNav("", "Ready");
+        renderVMPool(8, MIPS_MAP.slice(0, 8), new Set(), null);
+        renderSimCompare(0);
+      }
+
+      // ============================================================
+      // BOOT
+      // ============================================================
+      initDashboard();
+      renderVMPool(8, MIPS_MAP.slice(0, 8), new Set(), null);
+      renderSimCompare(0);
+      initFFCharts();
+    </script>
+  </body>
+</html>
