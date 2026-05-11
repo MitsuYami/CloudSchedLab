@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FT-GA Cloud Scheduler — Final Year Project</title>
+    <title>CloudSchedLab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
@@ -14,72 +14,6 @@
     <script src="data.js"></script>
     <script src="sim-engine.js"></script>
     <style>
-      #vivaOverlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: #0d0d0c;
-        z-index: 9999;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 3rem;
-      }
-      #vivaOverlay.open {
-        display: flex;
-      }
-      .viva-title {
-        font-size: 34px;
-        font-weight: 700;
-        color: #fff;
-        text-align: center;
-        margin-bottom: 0.5rem;
-      }
-      .viva-sub {
-        font-size: 15px;
-        color: #888;
-        text-align: center;
-        margin-bottom: 3rem;
-      }
-      .viva-stats {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
-        width: 100%;
-        max-width: 900px;
-        margin-bottom: 3rem;
-      }
-      .viva-stat {
-        background: #1a1a18;
-        border: 1px solid #2a2a28;
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-      }
-      .viva-stat-val {
-        font-size: 40px;
-        font-weight: 700;
-        color: #378add;
-        line-height: 1;
-      }
-      .viva-stat-lbl {
-        font-size: 13px;
-        color: #888;
-        margin-top: 8px;
-      }
-      .viva-close {
-        padding: 12px 32px;
-        background: #378add;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      .viva-close:hover {
-        opacity: 0.85;
-      }
       .page {
         animation: fadeIn 0.18s ease;
       }
@@ -105,46 +39,6 @@
     </style>
   </head>
   <body>
-    <div id="vivaOverlay">
-      <div class="viva-title">FT-GA Cloud Scheduling Framework</div>
-      <div class="viva-sub">
-        Intelligent &amp; Fault-Tolerant Task Scheduling in Cloud Computing —
-        Final Year Project
-      </div>
-      <div class="viva-stats">
-        <div class="viva-stat">
-          <div class="viva-stat-val">72.7%</div>
-          <div class="viva-stat-lbl">
-            GA makespan improvement over Broker Default
-          </div>
-        </div>
-        <div class="viva-stat">
-          <div class="viva-stat-val">100%</div>
-          <div class="viva-stat-lbl">
-            FT-GA task recovery at all fault levels (p=0.10–0.70)
-          </div>
-        </div>
-        <div class="viva-stat">
-          <div class="viva-stat-val">2.93×</div>
-          <div class="viva-stat-lbl">Less CPU time than Replication</div>
-        </div>
-        <div class="viva-stat">
-          <div class="viva-stat-val">7.6%</div>
-          <div class="viva-stat-lbl">
-            FT-GA overhead at large scale — dilution effect
-          </div>
-        </div>
-      </div>
-      <button
-        class="viva-close"
-        onclick="
-          document.getElementById('vivaOverlay').classList.remove('open')
-        "
-      >
-        Close Presentation View
-      </button>
-    </div>
-
     <nav>
       <div class="nav-brand">CloudSched<span>Lab</span></div>
       <a
@@ -202,13 +96,6 @@
         >About</a
       >
       <div class="nav-right">
-        <button
-          class="btn btn-outline"
-          style="padding: 5px 12px; font-size: 12px"
-          onclick="document.getElementById('vivaOverlay').classList.add('open')"
-        >
-          🎓 Viva Mode
-        </button>
         <div class="status-badge">
           <span class="dot" id="navDot"></span><span id="navStatus">Ready</span>
         </div>
